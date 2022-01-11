@@ -1,0 +1,63 @@
+version: "3.7"
+services:
+  app:
+    build:
+      args:
+        user: sb
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: pandoro
+    container_name: pandoro-application
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www
+    networks:
+      - pandoroNetwork
+
+  db:
+    image: mariadb:10.5
+    container_name: pandoro-database
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mariadb
+    volumes:
+      - ./docker/mariadb:/docker-entrypoint-initdb.d
+    networks:
+      - pandoroNetwork
+
+  php-my-admin:
+    depends_on:
+      - db
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: pandoro-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - '8080:80'
+    networks:
+      - pandoroNetwork
+
+  nginx:
+    image: nginx:1.17-alpine
+    container_name: pandoro-nginx
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx:/etc/nginx/conf.d
+    networks:
+      - pandoroNetwork
+
+networks:
+  pandoroNetwork:
+    driver: bridge

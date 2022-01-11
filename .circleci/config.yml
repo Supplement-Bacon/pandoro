@@ -1,0 +1,92 @@
+version: 2.1
+
+commands: # a reusable command with parameters
+  prepare_deployment:
+      steps:
+        - add_ssh_keys:
+            fingerprints:
+            - $DEPLOY_FINGERPRINT
+
+        - run:
+            name: Keyscan $HOST_NAME
+            command: ssh-keyscan -H $HOST_NAME >> ~/.ssh/known_hosts
+
+        - run:
+            name: Install required packages
+            command: |
+                sudo apt-get update
+                sudo apt-get install rsync ssh openssh-client
+
+        - run:
+            name: Install Deployer
+            command: |
+                curl -LO https://deployer.org/deployer.phar
+                sudo mv deployer.phar /usr/local/bin/dep
+                sudo chmod +x /usr/local/bin/dep
+
+  update_cache:
+      steps:
+        - restore_cache:
+            key: composer-v1-{{ checksum "composer.lock" }}
+        - run: composer install -n --prefer-dist
+        - save_cache:
+            key: composer-v1-{{ checksum "composer.lock" }}
+            paths:
+                - vendor
+
+  restore_n_install_cache:
+      steps:
+        # composer cache
+        - restore_cache:
+            key: composer-v1-{{ checksum "composer.lock" }}
+        - run: composer install -n --prefer-dist
+
+
+
+jobs:
+
+  build-pandoro:
+    docker:
+      - image: cimg/php:8.0.14-node
+    steps:
+      - checkout
+      - update_cache
+
+
+
+  deploy-pandoro:
+    docker:
+      - image: cimg/php:8.0.14-node
+    steps:
+      - checkout
+      - restore_n_install_cache
+      - prepare_deployment
+      - run:
+          name: Deploy to Production server
+          command: dep deploy stage=production
+
+
+workflows:
+  version: 2.1
+
+  build:
+    jobs:
+      - build-pandoro
+
+
+  deploy-pandoro:
+    jobs:
+      - build-pandoro:
+          filters:  # required since `deploy` has tag filters AND requires `build`
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - deploy-pandoro:
+          requires:
+            - build-pandoro
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/

@@ -1,14 +1,18 @@
 <p align="center"><a href="https://supplement-bacon.com" target="_blank"><img src="https://supplement-bacon.com/images/cover2.png" width="600"></a></p>
 
 # Pandoro
-This repository contains all what you need to start the developement of Laravel applications in an containerized environment.
-
+This repository contains all what you need to start the developement of Laravel applications in an containerized environment.<br>
+Those packages are alreay integrated:
+- [`laravel-notification-channels/onesignal`](https://github.com/laravel-notification-channels/onesignal) - Send notifications to your users via Onesignal
+- [`sausin/laravel-ovh`](https://github.com/sausin/laravel-ovh) - Wrapper for OVH Object Storage 
+- [`deployer/deployer`](https://github.com/deployphp/deployer) - PHP deployment tool
+ 
  
 ### Technologies
 
 | SERVICE |   PHP  | MariaDB |   Nginx   | Laravel |
 |:-------:|:------:|:-------:|:---------:|:-------:|
-| VERSION | 8.0.14 | 10.5    |1.17-alpine| 8.78.0  |
+| VERSION | 8.0.14 | 10.5    |1.17-alpine| 8.78.1  |
 
 ## Setting up Docker
 
